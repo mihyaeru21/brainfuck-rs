@@ -31,7 +31,7 @@ fn main() {
                 // TODO
             }
             '[' => {
-                if memory.get(memory_pointer).map_or(false, |v| *v == 0) {
+                if memory.get(memory_pointer).cloned().unwrap_or(1) == 0 {
                     if let Some(pointer) = get_close_bracket_pointer(&tokens, token_pointer + 1) {
                         token_pointer = pointer + 1;
                         continue;
@@ -39,7 +39,7 @@ fn main() {
                 }
             }
             ']' => {
-                if memory.get(memory_pointer).map_or(false, |v| *v != 0) {
+                if memory.get(memory_pointer).cloned().unwrap_or(0) != 0 {
                     if let Some(pointer) = get_open_bracket_pointer(&tokens, token_pointer - 1) {
                         token_pointer = pointer + 1;
                         continue;
