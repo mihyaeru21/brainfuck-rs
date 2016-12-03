@@ -39,24 +39,8 @@ impl<'a> Interpreter<'a> {
             '-' => try!(self.memory.decrement()),
             '.' => try!(self.output()),
             ',' => try!(self.input()),
-            '[' => {
-                let value = try!(self.memory.get());
-                if value == 0 {
-                    if let Some(pointer) =
-                           self.get_close_bracket_pointer(&tokens, self.token_pointer + 1) {
-                        self.token_pointer = pointer;
-                    }
-                }
-            }
-            ']' => {
-                let value = try!(self.memory.get());
-                if value != 0 {
-                    if let Some(pointer) =
-                           self.get_open_bracket_pointer(&tokens, self.token_pointer - 1) {
-                        self.token_pointer = pointer;
-                    }
-                }
-            }
+            '[' => try!(self.jump_to_end(&tokens)),
+            ']' => try!(self.jump_to_start(&tokens)),
             _ => {}
         }
         Ok(())
@@ -74,14 +58,33 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn get_close_bracket_pointer(&self, tokens: &Vec<char>, start_pointer: usize) -> Option<usize> {
+    fn jump_to_end(&mut self, tokens: &Vec<char>) -> Result<(), Error> {
+        if try!(self.memory.get()) == 0 {
+            let pointer = try!(self.find_close_bracket_pointer(&tokens, self.token_pointer + 1));
+            self.token_pointer = pointer;
+        }
+        Ok(())
+    }
+
+    fn jump_to_start(&mut self, tokens: &Vec<char>) -> Result<(), Error> {
+        if try!(self.memory.get()) != 0 {
+            let pointer = try!(self.find_open_bracket_pointer(&tokens, self.token_pointer - 1));
+            self.token_pointer = pointer;
+        }
+        Ok(())
+    }
+
+    fn find_close_bracket_pointer(&self,
+                                  tokens: &Vec<char>,
+                                  start_pointer: usize)
+                                  -> Result<usize, Error> {
         let mut count = 0;
         let mut pointer = start_pointer;
         while let Some(token) = tokens.get(pointer) {
             match *token {
                 ']' => {
                     if count == 0 {
-                        return Option::Some(pointer);
+                        return Ok(pointer);
                     } else {
                         count -= 1;
                     }
@@ -91,17 +94,20 @@ impl<'a> Interpreter<'a> {
             }
             pointer += 1;
         }
-        Option::None
+        Err(Error::Jump("corresponding bracket is not found."))
     }
 
-    fn get_open_bracket_pointer(&self, tokens: &Vec<char>, end_pointer: usize) -> Option<usize> {
+    fn find_open_bracket_pointer(&self,
+                                 tokens: &Vec<char>,
+                                 end_pointer: usize)
+                                 -> Result<usize, Error> {
         let mut count = 0;
         let mut pointer = end_pointer;
         while let Some(token) = tokens.get(pointer) {
             match *token {
                 '[' => {
                     if count == 0 {
-                        return Option::Some(pointer);
+                        return Ok(pointer);
                     } else {
                         count -= 1;
                     }
@@ -111,6 +117,6 @@ impl<'a> Interpreter<'a> {
             }
             pointer -= 1;
         }
-        Option::None
+        Err(Error::Jump("corresponding bracket is not found."))
     }
 }
