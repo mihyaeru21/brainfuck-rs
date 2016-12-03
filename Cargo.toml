@@ -1,5 +1,5 @@
 [package]
-name = "rust-bf"
+name = "brainfuck"
 version = "0.1.0"
 authors = ["Mihyaeru <mihyaeru21@gmail.com>"]
 
