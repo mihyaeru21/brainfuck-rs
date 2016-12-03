@@ -4,15 +4,14 @@ use std::io;
 use brainfuck::interpreter::Interpreter;
 
 fn main() {
-    let src: &str = "abc+++abc++++++[>++++++++>++++🍣+++++++>+++++<<<-]>.>++.+++++++..+++.>-.\
-                     ------------.<+++++あああ+++.--------.+++.------.--------.>+.,.";
-    let tokens: Vec<char> = src.chars().collect();
+    let src = "abc+++abc++++++[>++++++++>++++🍣+++++++>+++++<<<-]>.>++.+++++++..+++.>-.\
+                     ------------.<+++++あああ+++.--------.+++.------.--------.>+.";
 
-    let input = Box::new(io::stdin());
-    let output = Box::new(io::stdout());
-    let mut interpreter = Interpreter::new(20, input, output);
+    let mut input = io::stdin();
+    let mut output = io::stdout();
+    let mut interpreter = Interpreter::new(30000, &mut input, &mut output);
 
-    if let Err(e) = interpreter.run(tokens) {
+    if let Err(e) = interpreter.run(src) {
         println!("{}", e);
     }
 }

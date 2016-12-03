@@ -1,15 +1,18 @@
 use std::io;
 use super::memory::Memory;
 
-pub struct Interpreter {
+pub struct Interpreter<'a> {
     memory: Memory,
     token_pointer: usize,
-    input: Box<io::Read>,
-    output: Box<io::Write>,
+    input: &'a mut io::Read,
+    output: &'a mut io::Write,
 }
 
-impl Interpreter {
-    pub fn new(memory_size: usize, input: Box<io::Read>, output: Box<io::Write>) -> Interpreter {
+impl<'a> Interpreter<'a> {
+    pub fn new(memory_size: usize,
+               input: &'a mut io::Read,
+               output: &'a mut io::Write)
+               -> Interpreter<'a> {
         Interpreter {
             memory: Memory::new(memory_size),
             token_pointer: 0,
@@ -18,7 +21,8 @@ impl Interpreter {
         }
     }
 
-    pub fn run(&mut self, tokens: Vec<char>) -> Result<(), io::Error> {
+    pub fn run(&mut self, src: &str) -> Result<(), io::Error> {
+        let tokens: Vec<char> = src.chars().collect();
         while let Some(token) = tokens.get(self.token_pointer) {
             try!(self.step(*token, &tokens));
             self.token_pointer += 1;
@@ -57,12 +61,12 @@ impl Interpreter {
 
     fn output(&mut self) -> Result<(), io::Error> {
         let value = self.memory.get();
-        self.output.as_mut().write(&[value; 1]).map(|_| ())
+        self.output.write(&[value]).map(|_| ())
     }
 
     fn input(&mut self) -> Result<(), io::Error> {
-        let mut buffer = [0; 1];
-        try!(self.input.as_mut().read(&mut buffer));
+        let mut buffer = [0];
+        try!(self.input.read(&mut buffer));
         self.memory.set(buffer[0]);
         Ok(())
     }
