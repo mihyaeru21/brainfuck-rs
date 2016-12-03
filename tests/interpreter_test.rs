@@ -10,7 +10,7 @@ fn run() {
     let src = "+++++++++[>++++++++>+++++++++++>+++++<<<-]>.>++.+++++++..+++.>-.\
                      ------------.<++++++++.--------.+++.------.--------.>+.,.,.,.,.";
 
-    Interpreter::new(20, &mut input, &mut output).run(&src);
+    let _ = Interpreter::new(20, &mut input, &mut output).run(&src);
 
     let output_str = std::str::from_utf8(&output).unwrap();
     assert_eq!(output_str, "Hello, world!🍣");

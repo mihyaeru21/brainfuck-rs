@@ -1,5 +1,6 @@
 use std::io;
 use super::memory::Memory;
+use super::error::Error;
 
 pub struct Interpreter<'a> {
     memory: Memory,
@@ -21,7 +22,7 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    pub fn run(&mut self, src: &str) -> Result<(), io::Error> {
+    pub fn run(&mut self, src: &str) -> Result<(), Error> {
         let tokens: Vec<char> = src.chars().collect();
         while let Some(token) = tokens.get(self.token_pointer) {
             try!(self.step(*token, &tokens));
@@ -30,16 +31,17 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn step(&mut self, token: char, tokens: &Vec<char>) -> Result<(), io::Error> {
+    fn step(&mut self, token: char, tokens: &Vec<char>) -> Result<(), Error> {
         match token {
-            '>' => self.memory.move_next(),
-            '<' => self.memory.move_prev(),
-            '+' => self.memory.increment(),
-            '-' => self.memory.decrement(),
+            '>' => try!(self.memory.move_next()),
+            '<' => try!(self.memory.move_prev()),
+            '+' => try!(self.memory.increment()),
+            '-' => try!(self.memory.decrement()),
             '.' => try!(self.output()),
             ',' => try!(self.input()),
             '[' => {
-                if self.memory.get() == 0 {
+                let value = try!(self.memory.get());
+                if value == 0 {
                     if let Some(pointer) =
                            self.get_close_bracket_pointer(&tokens, self.token_pointer + 1) {
                         self.token_pointer = pointer;
@@ -47,7 +49,8 @@ impl<'a> Interpreter<'a> {
                 }
             }
             ']' => {
-                if self.memory.get() != 0 {
+                let value = try!(self.memory.get());
+                if value != 0 {
                     if let Some(pointer) =
                            self.get_open_bracket_pointer(&tokens, self.token_pointer - 1) {
                         self.token_pointer = pointer;
@@ -59,15 +62,15 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn output(&mut self) -> Result<(), io::Error> {
-        let value = self.memory.get();
-        self.output.write(&[value]).map(|_| ())
+    fn output(&mut self) -> Result<(), Error> {
+        let value = try!(self.memory.get());
+        self.output.write(&[value]).map(|_| ()).map_err(|e| Error::Io(e))
     }
 
-    fn input(&mut self) -> Result<(), io::Error> {
+    fn input(&mut self) -> Result<(), Error> {
         let mut buffer = [0];
-        try!(self.input.read(&mut buffer));
-        self.memory.set(buffer[0]);
+        try!(self.input.read(&mut buffer).map_err(|e| Error::Io(e)));
+        try!(self.memory.set(buffer[0]));
         Ok(())
     }
 
