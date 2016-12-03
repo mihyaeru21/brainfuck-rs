@@ -19,7 +19,7 @@ impl Interpreter {
         }
     }
 
-    fn run(&mut self, tokens: Vec<char>) {
+    fn run(&mut self, tokens: Vec<char>) -> Result<(), io::Error> {
         while let Some(token) = tokens.get(self.token_pointer) {
             match *token {
                 '>' => self.memory_pointer += 1,
@@ -36,11 +36,15 @@ impl Interpreter {
                 }
                 '.' => {
                     if let Some(v) = self.memory.get(self.memory_pointer) {
-                        self.output.as_mut().write(&[*v; 1]);
+                        try!(self.output.as_mut().write(&[*v; 1]));
                     }
                 }
                 ',' => {
-                    // TODO
+                    let mut buffer = [0; 1];
+                    try!(self.input.as_mut().read(&mut buffer));
+                    if let Some(mut value) = self.memory.get_mut(self.memory_pointer) {
+                        *value = buffer[0];
+                    }
                 }
                 '[' => {
                     if self.memory.get(self.memory_pointer).cloned().unwrap_or(1) == 0 {
@@ -65,6 +69,7 @@ impl Interpreter {
 
             self.token_pointer += 1;
         }
+        Ok(())
     }
 
     fn get_close_bracket_pointer(&self, tokens: &Vec<char>, start_pointer: usize) -> Option<usize> {
@@ -110,12 +115,14 @@ impl Interpreter {
 
 fn main() {
     let src: &str = "abc+++abc++++++[>++++++++>++++🍣+++++++>+++++<<<-]>.>++.+++++++..+++.>-.\
-                     ------------.<+++++あああ+++.--------.+++.------.--------.>+.";
+                     ------------.<+++++あああ+++.--------.+++.------.--------.>+.,.";
     let tokens: Vec<char> = src.chars().collect();
 
     let input = Box::new(io::stdin());
     let output = Box::new(io::stdout());
     let mut interpreter = Interpreter::new(input, output);
 
-    interpreter.run(tokens);
+    if let Err(e) = interpreter.run(tokens) {
+        println!("{}", e);
+    }
 }
