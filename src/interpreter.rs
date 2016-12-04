@@ -57,7 +57,7 @@ impl<R: io::Read, W: io::Write> Interpreter<R, W> {
 
     fn jump_to_end(&mut self, tokens: &Vec<char>) -> Result<(), Error> {
         if self.memory.get()? == 0 {
-            let pointer = self.find_close_bracket_pointer(&tokens, self.token_pointer + 1)?;
+            let pointer = self.find_close_pointer(&tokens, self.token_pointer + 1, 0)?;
             self.token_pointer = pointer;
         }
         Ok(())
@@ -65,54 +65,41 @@ impl<R: io::Read, W: io::Write> Interpreter<R, W> {
 
     fn jump_to_start(&mut self, tokens: &Vec<char>) -> Result<(), Error> {
         if self.memory.get()? != 0 {
-            let pointer = self.find_open_bracket_pointer(&tokens, self.token_pointer - 1)?;
+            let pointer = self.find_open_pointer(&tokens, self.token_pointer - 1, 0)?;
             self.token_pointer = pointer;
         }
         Ok(())
     }
 
-    fn find_close_bracket_pointer(&self,
-                                  tokens: &Vec<char>,
-                                  start_pointer: usize)
-                                  -> Result<usize, Error> {
-        let mut count = 0;
-        let mut pointer = start_pointer;
-        while let Some(token) = tokens.get(pointer) {
-            match *token {
-                ']' => {
-                    if count == 0 {
-                        return Ok(pointer);
-                    } else {
-                        count -= 1;
-                    }
-                }
-                '[' => count += 1,
+    fn find_close_pointer(&self,
+                          tokens: &Vec<char>,
+                          start_pointer: usize,
+                          count: usize)
+                          -> Result<usize, Error> {
+        for pointer in start_pointer..tokens.len() {
+            match (tokens[pointer], count) {
+                (']', 0) => return Ok(pointer),
+                (']', _) => return self.find_close_pointer(tokens, start_pointer, count - 1),
+                ('[', _) => return self.find_close_pointer(tokens, start_pointer, count + 1),
                 _ => {}
             }
-            pointer += 1;
         }
         Err(Error::Jump("corresponding bracket is not found."))
     }
 
-    fn find_open_bracket_pointer(&self,
-                                 tokens: &Vec<char>,
-                                 end_pointer: usize)
-                                 -> Result<usize, Error> {
-        let mut count = 0;
-        let mut pointer = end_pointer;
-        while let Some(token) = tokens.get(pointer) {
-            match *token {
-                '[' => {
-                    if count == 0 {
-                        return Ok(pointer);
-                    } else {
-                        count -= 1;
-                    }
-                }
-                ']' => count += 1,
+    fn find_open_pointer(&self,
+                         tokens: &Vec<char>,
+                         end_pointer: usize,
+                         count: usize)
+                         -> Result<usize, Error> {
+        for offset in 0..(tokens.len() - end_pointer) {
+            let pointer = end_pointer - offset;
+            match (tokens[pointer], count) {
+                ('[', 0) => return Ok(pointer),
+                ('[', _) => return self.find_open_pointer(tokens, end_pointer, count - 1),
+                (']', _) => return self.find_open_pointer(tokens, end_pointer, count + 1),
                 _ => {}
             }
-            pointer -= 1;
         }
         Err(Error::Jump("corresponding bracket is not found."))
     }
