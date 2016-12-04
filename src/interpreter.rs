@@ -91,8 +91,7 @@ impl<R: io::Read, W: io::Write> Interpreter<R, W> {
                          end_pointer: usize,
                          count: usize)
                          -> Result<usize, Error> {
-        for offset in 0..(tokens.len() - end_pointer) {
-            let pointer = end_pointer - offset;
+        for pointer in (0..end_pointer).rev() {
             match (tokens[pointer], count) {
                 ('[', 0) => return Ok(pointer),
                 ('[', _) => return self.find_open_pointer(tokens, end_pointer, count - 1),
