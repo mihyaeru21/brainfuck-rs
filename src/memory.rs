@@ -34,7 +34,7 @@ impl Memory {
     }
 
     pub fn increment(&mut self) -> Result<(), Error> {
-        let mut value = try!(self.get_mut());
+        let mut value = self.get_mut()?;
         if *value >= 255 {
             Err(Error::Memory("value overflow."))
         } else {
@@ -44,7 +44,7 @@ impl Memory {
     }
 
     pub fn decrement(&mut self) -> Result<(), Error> {
-        let mut value = try!(self.get_mut());
+        let mut value = self.get_mut()?;
         if *value < 1 {
             Err(Error::Memory("value underflow."))
         } else {
@@ -58,7 +58,7 @@ impl Memory {
     }
 
     pub fn set(&mut self, value: Byte) -> Result<(), Error> {
-        let mut v = try!(self.get_mut());
+        let mut v = self.get_mut()?;
         *v = value;
         Ok(())
     }
