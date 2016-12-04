@@ -30,17 +30,16 @@ impl<R: io::Read, W: io::Write> Interpreter<R, W> {
 
     fn step(&mut self, token: char, tokens: &Vec<char>) -> Result<(), Error> {
         match token {
-            '>' => self.memory.move_next()?,
-            '<' => self.memory.move_prev()?,
-            '+' => self.memory.increment()?,
-            '-' => self.memory.decrement()?,
-            '.' => self.output()?,
-            ',' => self.input()?,
-            '[' => self.jump_to_end(&tokens)?,
-            ']' => self.jump_to_start(&tokens)?,
-            _ => {}
+            '>' => self.memory.move_next(),
+            '<' => self.memory.move_prev(),
+            '+' => self.memory.increment(),
+            '-' => self.memory.decrement(),
+            '.' => self.output(),
+            ',' => self.input(),
+            '[' => self.jump_to_end(&tokens),
+            ']' => self.jump_to_start(&tokens),
+            _ => Ok(()),
         }
-        Ok(())
     }
 
     fn output(&mut self) -> Result<(), Error> {
@@ -51,8 +50,7 @@ impl<R: io::Read, W: io::Write> Interpreter<R, W> {
     fn input(&mut self) -> Result<(), Error> {
         let mut buffer = [0];
         self.input.read(&mut buffer).map_err(|e| Error::Io(e))?;
-        self.memory.set(buffer[0])?;
-        Ok(())
+        self.memory.set(buffer[0])
     }
 
     fn jump_to_end(&mut self, tokens: &Vec<char>) -> Result<(), Error> {
