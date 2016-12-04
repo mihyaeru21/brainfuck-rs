@@ -44,13 +44,13 @@ impl<R: io::Read, W: io::Write> Interpreter<R, W> {
 
     fn output(&mut self) -> Result<(), Error> {
         let value = self.memory.get()?;
-        self.output.write(&[value]).map(|_| ())?;
+        self.output.write_all(&[value])?;
         Ok(())
     }
 
     fn input(&mut self) -> Result<(), Error> {
         let mut buffer = [0];
-        self.input.read(&mut buffer)?;
+        self.input.read_exact(&mut buffer)?;
         self.memory.set(buffer[0])
     }
 
