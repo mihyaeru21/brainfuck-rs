@@ -2,18 +2,15 @@ use std::io;
 use super::memory::Memory;
 use super::error::Error;
 
-pub struct Interpreter<'a> {
+pub struct Interpreter<R, W> {
     memory: Memory,
     token_pointer: usize,
-    input: &'a mut io::Read,
-    output: &'a mut io::Write,
+    input: R,
+    output: W,
 }
 
-impl<'a> Interpreter<'a> {
-    pub fn new(memory_size: usize,
-               input: &'a mut io::Read,
-               output: &'a mut io::Write)
-               -> Interpreter<'a> {
+impl<R: io::Read, W: io::Write> Interpreter<R, W> {
+    pub fn new(memory_size: usize, input: R, output: W) -> Interpreter<R, W> {
         Interpreter {
             memory: Memory::new(memory_size),
             token_pointer: 0,
