@@ -36,3 +36,9 @@ impl error::Error for Error {
         }
     }
 }
+
+impl From<io::Error> for Error {
+    fn from(e: io::Error) -> Error {
+        Error::Io(e)
+    }
+}
